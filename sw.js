@@ -1,5 +1,11 @@
-const CACHE = 'sentinelle-v1';
-const ASSETS = ['./', './index.html', './manifest.json', './icons/icon-192.png', './icons/icon-512.png'];
+const CACHE = 'sentinelle-v2';
+const ASSETS = [
+  './', './index.html', './manifest.json',
+  './css/base.css', './css/themes.css',
+  './js/app.js', './js/data.js', './js/store.js', './js/theme.js',
+  './js/feed.js', './js/map.js', './js/report.js', './js/sim.js', './js/utils.js',
+  './icons/icon-192.png', './icons/icon-512.png',
+];
 
 self.addEventListener('install', (e) => {
   e.waitUntil(caches.open(CACHE).then((c) => c.addAll(ASSETS)).catch(()=>{}));
@@ -23,7 +29,7 @@ self.addEventListener('fetch', (e) => {
           caches.open(CACHE).then((c) => c.put(e.request, copy));
         }
         return res;
-      }).catch(() => cached);
+      }).catch(() => cached || (e.request.mode === 'navigate' ? caches.match('./index.html') : undefined));
       return cached || fetchPromise;
     })
   );
