@@ -1,0 +1,651 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Sentinelle — Prototype</title>
+<meta name="theme-color" content="#12213d">
+<link rel="manifest" href="./manifest.json">
+<link rel="icon" href="./icons/icon-192.png">
+<link rel="apple-touch-icon" href="./icons/icon-192.png">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<style>
+:root{
+  --navy:#12213d; --navy-2:#1b2a4a; --teal:#0e7c7b; --teal-2:#13a3a1;
+  --bg:#f4f6f8; --card:#ffffff; --text:#1c2430; --muted:#697184; --border:#e2e6eb;
+  --vert:#2fa84f; --jaune:#e7b100; --orange:#e07b1a; --rouge:#d43d3d;
+  --shadow: 0 2px 10px rgba(20,30,50,.08);
+}
+@media (prefers-color-scheme: dark){
+  :root{ --bg:#0f1420; --card:#171e2c; --text:#e8ecf2; --muted:#9aa4b8; --border:#2a3244; }
+}
+*{box-sizing:border-box;}
+body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;}
+#app{max-width:480px;margin:0 auto;min-height:100vh;display:flex;flex-direction:column;background:var(--bg);position:relative;}
+
+header.topbar{display:flex;align-items:center;gap:10px;padding:14px 16px calc(14px + env(safe-area-inset-top,0px));background:linear-gradient(135deg,var(--navy),var(--navy-2));color:#fff;position:sticky;top:0;z-index:20;padding-top:14px;}
+header.topbar .logo{width:34px;height:34px;border-radius:9px;background:var(--teal);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:16px;flex:none;}
+header.topbar .title{font-weight:700;font-size:17px;line-height:1.1;}
+header.topbar .loc{font-size:12px;color:#c9d3e6;}
+header.topbar .spacer{flex:1;}
+#installBtn{background:var(--teal-2);border:none;color:#06231f;font-weight:700;font-size:12px;padding:8px 10px;border-radius:8px;cursor:pointer;display:none;}
+#installBtn.show{display:inline-block;}
+
+.alertbar{margin:10px 12px 0;padding:12px 14px;border-radius:12px;display:none;gap:10px;align-items:flex-start;box-shadow:var(--shadow);border-left:5px solid var(--orange);background:var(--card);}
+.alertbar.show{display:flex;}
+.alertbar .ico{font-size:20px;}
+.alertbar b{display:block;font-size:13.5px;margin-bottom:2px;}
+.alertbar span{font-size:12.5px;color:var(--muted);}
+.alertbar .close{margin-left:auto;background:none;border:none;color:var(--muted);font-size:16px;cursor:pointer;padding:0 2px;}
+
+main{flex:1;padding:12px 12px 90px;}
+.section-title{font-size:13px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;margin:14px 4px 8px;}
+
+.chips{display:flex;gap:8px;overflow-x:auto;padding:2px 2px 4px;}
+.chip{flex:none;padding:8px 13px;border-radius:999px;border:1px solid var(--border);background:var(--card);font-size:13px;font-weight:600;color:var(--text);cursor:pointer;display:flex;align-items:center;gap:6px;}
+.chip.active{background:var(--teal);border-color:var(--teal);color:#fff;}
+.chip .dot{width:8px;height:8px;border-radius:50%;}
+
+.legend{display:flex;gap:12px;flex-wrap:wrap;padding:6px 4px 10px;font-size:11.5px;color:var(--muted);}
+.legend span{display:inline-flex;align-items:center;gap:5px;}
+.legend i{width:9px;height:9px;border-radius:3px;display:inline-block;}
+
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;}
+.zone{border-radius:12px;padding:10px 8px;min-height:78px;display:flex;flex-direction:column;justify-content:space-between;cursor:pointer;color:#fff;box-shadow:var(--shadow);position:relative;transition:transform .15s;}
+.zone:active{transform:scale(.96);}
+.zone .name{font-size:11.5px;font-weight:700;line-height:1.15;text-shadow:0 1px 2px rgba(0,0,0,.25);}
+.zone .val{font-size:10.5px;opacity:.95;}
+.zone .pulse{position:absolute;top:6px;right:6px;width:8px;height:8px;border-radius:50%;background:#fff;opacity:0;}
+.zone.updated .pulse{animation:pulse 1.6s ease-out;}
+@keyframes pulse{0%{opacity:1;transform:scale(1);}100%{opacity:0;transform:scale(2.4);}}
+
+.lvl-0{background:linear-gradient(160deg,var(--vert),#237a3c);}
+.lvl-1{background:linear-gradient(160deg,var(--jaune),#b98a00);color:#2a2100;}
+.lvl-1 .name{text-shadow:none;}
+.lvl-2{background:linear-gradient(160deg,var(--orange),#a85a10);}
+.lvl-3{background:linear-gradient(160deg,var(--rouge),#9c2b2b);}
+
+.card{background:var(--card);border-radius:14px;padding:14px;box-shadow:var(--shadow);margin-bottom:10px;border:1px solid var(--border);}
+.card h3{margin:0 0 6px;font-size:14.5px;}
+.card p{margin:0 0 8px;font-size:13px;color:var(--muted);line-height:1.45;}
+.confidence{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--muted);}
+.confidence .bar{flex:1;height:6px;border-radius:4px;background:var(--border);overflow:hidden;}
+.confidence .fill{height:100%;background:var(--teal);}
+
+.feed-item{display:flex;gap:10px;padding:12px 4px;border-bottom:1px solid var(--border);}
+.feed-item:last-child{border-bottom:none;}
+.feed-item .bar{width:4px;border-radius:3px;flex:none;}
+.feed-item .content{flex:1;min-width:0;}
+.feed-item .row1{display:flex;justify-content:space-between;gap:8px;align-items:baseline;}
+.feed-item .zoneName{font-weight:700;font-size:13.5px;}
+.feed-item .time{font-size:11px;color:var(--muted);flex:none;}
+.feed-item .txt{font-size:12.5px;color:var(--muted);margin-top:2px;}
+.badge{display:inline-flex;align-items:center;gap:4px;font-size:10.5px;font-weight:700;padding:2px 7px;border-radius:999px;margin-top:6px;}
+.badge.trust{background:rgba(47,168,79,.15);color:#1e7a37;}
+.badge.new{background:rgba(105,113,132,.15);color:var(--muted);}
+.badge.check{background:rgba(224,123,26,.15);color:#a85a10;}
+
+.tabbar{position:fixed;bottom:0;left:0;right:0;display:flex;justify-content:center;z-index:30;}
+.tabbar-inner{max-width:480px;width:100%;background:var(--card);border-top:1px solid var(--border);display:flex;padding:6px 6px calc(6px + env(safe-area-inset-bottom,0px));}
+.tab{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:8px 2px;border-radius:10px;color:var(--muted);cursor:pointer;font-size:10.5px;font-weight:600;background:none;border:none;}
+.tab .ic{font-size:19px;}
+.tab.active{color:var(--teal);}
+
+.view{display:none;}
+.view.active{display:block;}
+
+.fab{position:fixed;bottom:78px;right:calc(50% - 240px + 16px);width:56px;height:56px;border-radius:50%;background:var(--teal);color:#fff;border:none;font-size:26px;box-shadow:0 6px 16px rgba(14,124,123,.4);cursor:pointer;z-index:25;}
+@media (max-width:520px){ .fab{right:16px;} }
+
+.sheet-backdrop{position:fixed;inset:0;background:rgba(10,14,22,.5);z-index:40;display:none;}
+.sheet-backdrop.show{display:block;}
+.sheet{position:fixed;left:0;right:0;bottom:0;max-width:480px;margin:0 auto;background:var(--card);border-radius:18px 18px 0 0;padding:18px 18px calc(18px + env(safe-area-inset-bottom,0px));z-index:41;transform:translateY(100%);transition:transform .25s ease;box-shadow:0 -6px 24px rgba(0,0,0,.2);}
+.sheet.show{transform:translateY(0);}
+.sheet h3{margin:0 0 12px;}
+.field{margin-bottom:12px;}
+.field label{display:block;font-size:12px;font-weight:700;color:var(--muted);margin-bottom:6px;}
+.field select, .field textarea{width:100%;padding:10px;border-radius:10px;border:1px solid var(--border);background:var(--bg);color:var(--text);font-size:14px;font-family:inherit;}
+.field textarea{resize:none;height:64px;}
+.sev-row{display:flex;gap:8px;}
+.sev-btn{flex:1;padding:9px 0;border-radius:10px;border:1px solid var(--border);background:var(--bg);color:var(--text);font-size:12.5px;font-weight:700;cursor:pointer;}
+.sev-btn.sel-0{background:var(--vert);color:#fff;border-color:var(--vert);}
+.sev-btn.sel-1{background:var(--jaune);color:#2a2100;border-color:var(--jaune);}
+.sev-btn.sel-2{background:var(--orange);color:#fff;border-color:var(--orange);}
+.sev-btn.sel-3{background:var(--rouge);color:#fff;border-color:var(--rouge);}
+.submitBtn{width:100%;padding:13px;border:none;border-radius:12px;background:var(--teal);color:#fff;font-weight:700;font-size:14.5px;cursor:pointer;margin-top:6px;}
+
+.toast{position:fixed;left:50%;bottom:100px;transform:translateX(-50%);background:#12213d;color:#fff;padding:10px 16px;border-radius:10px;font-size:13px;z-index:60;opacity:0;transition:opacity .25s, transform .25s;pointer-events:none;box-shadow:var(--shadow);}
+.toast.show{opacity:1;}
+
+.about p{font-size:13.5px;line-height:1.6;color:var(--muted);}
+.about h3{font-size:14.5px;margin:16px 0 6px;}
+.simrow{display:flex;align-items:center;justify-content:space-between;background:var(--card);border:1px solid var(--border);border-radius:12px;padding:12px 14px;margin-top:10px;}
+.switch{width:42px;height:24px;border-radius:999px;background:var(--border);position:relative;cursor:pointer;flex:none;}
+.switch.on{background:var(--teal);}
+.switch i{position:absolute;top:2px;left:2px;width:20px;height:20px;border-radius:50%;background:#fff;transition:left .2s;}
+.switch.on i{left:20px;}
+
+.viewToggle{display:flex;gap:8px;padding:2px 2px 10px;}
+.viewToggle button{flex:1;padding:9px 6px;border-radius:10px;border:1px solid var(--border);background:var(--card);color:var(--text);font-size:12.5px;font-weight:700;cursor:pointer;}
+.viewToggle button.active{background:var(--navy);border-color:var(--navy);color:#fff;}
+.livebadge{display:inline-flex;align-items:center;gap:5px;font-size:10.5px;font-weight:700;color:#1e7a37;background:rgba(47,168,79,.15);padding:2px 8px;border-radius:999px;margin-left:6px;}
+.livebadge i{width:6px;height:6px;border-radius:50%;background:#2fa84f;animation:blink 1.6s ease-in-out infinite;}
+@keyframes blink{0%,100%{opacity:1;}50%{opacity:.25;}}
+#realMap{width:100%;height:260px;border-radius:14px;overflow:hidden;box-shadow:var(--shadow);border:1px solid var(--border);}
+.leaflet-popup-content{font-size:12.5px;}
+.stationCard{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:12px 4px;border-bottom:1px solid var(--border);}
+.stationCard:last-child{border-bottom:none;}
+.stationCard .sname{font-weight:700;font-size:13px;}
+.stationCard .scode{font-size:10.5px;color:var(--muted);}
+.stationCard .svals{text-align:right;font-size:12px;color:var(--muted);}
+.stationCard .svals b{display:block;font-size:14px;color:var(--text);}
+.refreshBtn{width:100%;padding:10px;border-radius:10px;border:1px solid var(--border);background:var(--card);color:var(--teal);font-weight:700;font-size:12.5px;cursor:pointer;margin-top:8px;}
+.datasrc{font-size:11px;color:var(--muted);text-align:center;padding:8px 0 2px;}
+</style>
+</head>
+<body>
+<div id="app">
+
+  <header class="topbar">
+    <div class="logo">🛡</div>
+    <div>
+      <div class="title">Sentinelle</div>
+      <div class="loc">📍 Rivière-sur-Seine (démo)</div>
+    </div>
+    <div class="spacer"></div>
+    <button id="installBtn">Installer</button>
+  </header>
+
+  <div class="alertbar" id="alertbar">
+    <div class="ico">⚠️</div>
+    <div style="flex:1">
+      <b id="alertTitle">Vigilance orange — crue rapide</b>
+      <span id="alertBody">Quartier Bord-de-Rivière : montée des eaux estimée d'ici 2h (confiance 78%)</span>
+    </div>
+    <button class="close" onclick="dismissAlert()">✕</button>
+  </div>
+
+  <main>
+    <!-- CARTE -->
+    <div class="view active" id="view-carte">
+      <div class="viewToggle">
+        <button id="btnViewSchema" class="active" onclick="setMapView('schema')">🗺️ Carte schématique (démo)</button>
+        <button id="btnViewReal" onclick="setMapView('real')">🌍 Carte réelle (Seine)</button>
+      </div>
+
+      <div id="schematicBlock">
+        <div class="section-title">Aléa affiché</div>
+        <div class="chips" id="hazardChips"></div>
+        <div class="legend">
+          <span><i style="background:var(--vert)"></i>Vert — normal</span>
+          <span><i style="background:var(--jaune)"></i>Jaune — soyez attentif</span>
+          <span><i style="background:var(--orange)"></i>Orange — vigilance</span>
+          <span><i style="background:var(--rouge)"></i>Rouge — danger</span>
+        </div>
+        <div class="section-title">Carte schématique des quartiers</div>
+        <div class="grid" id="zoneGrid"></div>
+
+        <div class="section-title">Détail de la zone</div>
+        <div class="card" id="zoneDetail">
+          <h3>Sélectionnez un quartier</h3>
+          <p>Touchez une tuile de la carte pour voir la prévision d'impact détaillée et les derniers signalements.</p>
+        </div>
+      </div>
+
+      <div id="realBlock" style="display:none">
+        <div class="section-title">Stations Vigicrues / Hub'Eau <span class="livebadge"><i></i>Temps réel</span></div>
+        <div id="realMap"></div>
+        <div class="card" style="margin-top:10px;padding:4px 14px;">
+          <div id="stationList"></div>
+          <button class="refreshBtn" onclick="loadStations()">↻ Actualiser les niveaux d'eau</button>
+        </div>
+        <p class="datasrc">Données publiques en direct — API Hub'Eau / hydrométrie (hubeau.eaufrance.fr). Stations réelles sur la Seine à Paris, données mises à jour toutes les ~5 min par le service public.</p>
+      </div>
+    </div>
+
+    <!-- ALERTES -->
+    <div class="view" id="view-alertes">
+      <div class="section-title">Flux d'alertes &amp; signalements en direct</div>
+      <div class="card" style="padding:4px 14px;" id="feed"></div>
+    </div>
+
+    <!-- A PROPOS -->
+    <div class="view" id="view-apropos">
+      <div class="section-title">À propos de ce prototype</div>
+      <div class="card about">
+        <p><b>Sentinelle</b> est un prototype fonctionnel démontrant la fusion entre <b>prévision d'impact</b> (modèle météo + vulnérabilité locale) et <b>signalement citoyen vérifié</b>, pour transformer une prévision météo en information de risque actionnable — l'objectif final étant de réduire la mortalité liée aux catastrophes naturelles.</p>
+        <h3>Ce que simule ce prototype</h3>
+        <p>La commune « Rivière-sur-Seine » et ses données sont fictives, générées pour la démonstration. En conditions réelles, les niveaux de risque proviendraient de sources publiques ouvertes (Vigicrues/Hub'Eau, APIC Météo-France, Copernicus, modèles IA type GraphCast/GenCast) recalibrées par les signalements des habitants.</p>
+        <h3>Simulation en direct</h3>
+        <div class="simrow">
+          <div>
+            <div style="font-weight:700;font-size:13px;">Événements simulés</div>
+            <div style="font-size:11.5px;color:var(--muted);">Nouveaux signalements &amp; variations de risque</div>
+          </div>
+          <div class="switch on" id="simSwitch" onclick="toggleSim()"><i></i></div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <button class="fab" id="fabReport" onclick="openSheet()">＋</button>
+
+  <div class="tabbar">
+    <div class="tabbar-inner">
+      <button class="tab active" data-tab="carte"><span class="ic">🗺️</span>Carte</button>
+      <button class="tab" data-tab="alertes"><span class="ic">🔔</span>Alertes</button>
+      <button class="tab" data-tab="apropos"><span class="ic">ℹ️</span>À propos</button>
+    </div>
+  </div>
+
+  <div class="sheet-backdrop" id="sheetBackdrop" onclick="closeSheet()"></div>
+  <div class="sheet" id="sheet">
+    <h3>Faire un signalement</h3>
+    <div class="field">
+      <label>Quartier</label>
+      <select id="fZone"></select>
+    </div>
+    <div class="field">
+      <label>Type d'aléa</label>
+      <select id="fHazard">
+        <option value="inondation">Inondation</option>
+        <option value="canicule">Canicule</option>
+        <option value="orage">Orage / vent</option>
+      </select>
+    </div>
+    <div class="field">
+      <label>Gravité observée</label>
+      <div class="sev-row" id="fSevRow"></div>
+    </div>
+    <div class="field">
+      <label>Note (optionnel)</label>
+      <textarea id="fNote" placeholder="Ex : eau à mi-roue sur le pont, route coupée…"></textarea>
+    </div>
+    <button class="submitBtn" onclick="submitReport()">Envoyer le signalement</button>
+  </div>
+
+  <div class="toast" id="toast"></div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script>
+const HAZARDS = [
+  {id:'inondation', label:'Inondation', icon:'🌊'},
+  {id:'canicule', label:'Canicule', icon:'🌡️'},
+  {id:'orage', label:'Orage / vent', icon:'⛈️'},
+];
+let currentHazard = 'inondation';
+
+const ZONES = [
+  {id:'centre', name:'Centre-Ville'},
+  {id:'bord', name:'Bord-de-Rivière'},
+  {id:'pont', name:'Vieux-Pont'},
+  {id:'gare', name:'Quartier Gare'},
+  {id:'indus', name:'Zone Industrielle'},
+  {id:'coteaux', name:'Les Coteaux'},
+  {id:'marche', name:'Vieux-Marché'},
+  {id:'ecoles', name:'Quartier Écoles'},
+  {id:'parc', name:'Parc Nord'},
+  {id:'basse', name:'Ville-Basse'},
+  {id:'plateau', name:'Le Plateau'},
+  {id:'rocade', name:'La Rocade'},
+];
+
+// niveau 0-3 par aléa et par zone
+const state = {};
+ZONES.forEach(z=>{
+  state[z.id] = {
+    inondation: z.id==='bord'?2 : z.id==='pont'?1 : Math.random()<0.15?1:0,
+    canicule: z.id==='indus'?2 : z.id==='rocade'?2 : Math.random()<0.2?1:0,
+    orage: Math.random()<0.15?1:0,
+    confidence: {inondation: 70+Math.floor(Math.random()*20), canicule: 60+Math.floor(Math.random()*25), orage: 55+Math.floor(Math.random()*25)},
+  };
+});
+
+const IMPACT_TEXT = {
+  inondation: {
+    0:(z)=>`Aucun signe de montée des eaux à ${z}. Situation normale.`,
+    1:(z)=>`Sol saturé à ${z}, petites accumulations possibles en points bas.`,
+    2:(z)=>`Montée des eaux estimée à ${z} d'ici 2h. Évitez les sous-sols et parkings enterrés.`,
+    3:(z)=>`Crue rapide en cours à ${z}. Ne vous engagez pas sur les routes immergées, montez en étage si besoin.`,
+  },
+  canicule: {
+    0:(z)=>`Températures dans les normales à ${z}.`,
+    1:(z)=>`Chaleur marquée à ${z}, pensez à vous hydrater et surveiller les personnes fragiles.`,
+    2:(z)=>`Pic de chaleur attendu à ${z} en après-midi. Limitez les efforts en extérieur entre 12h et 18h.`,
+    3:(z)=>`Canicule sévère à ${z}. Restez dans un lieu frais, contactez vos proches isolés ou âgés.`,
+  },
+  orage: {
+    0:(z)=>`Pas d'activité orageuse prévue à ${z}.`,
+    1:(z)=>`Orages isolés possibles à ${z} en soirée.`,
+    2:(z)=>`Rafales fortes et orages attendus à ${z}. Rentrez les objets extérieurs.`,
+    3:(z)=>`Orage violent en cours à ${z}. Évitez tout déplacement, éloignez-vous des fenêtres.`,
+  },
+};
+
+const LEVEL_LABEL = ['Normal','Attention','Vigilance','Danger'];
+
+let feed = [];
+let feedSeq = 1;
+function pushFeed(item){
+  item.id = feedSeq++;
+  item.ts = Date.now();
+  feed.unshift(item);
+  feed = feed.slice(0,40);
+  renderFeed();
+}
+
+const CONTRIBUTORS = [
+  {name:'Marc D.', trust:88},
+  {name:'Salima B.', trust:92},
+  {name:'Yanis T.', trust:35},
+  {name:'Claire M.', trust:97},
+  {name:'Contributeur anonyme', trust:20},
+  {name:'Nadia F.', trust:76},
+];
+
+function trustBadge(trust){
+  if(trust>=70) return '<span class="badge trust">✓ Fiable</span>';
+  if(trust>=45) return '<span class="badge new">● Nouveau</span>';
+  return '<span class="badge check">! À vérifier</span>';
+}
+
+function timeAgo(ts){
+  const s = Math.floor((Date.now()-ts)/1000);
+  if(s<60) return "à l'instant";
+  const m = Math.floor(s/60);
+  if(m<60) return `il y a ${m} min`;
+  const h = Math.floor(m/60);
+  return `il y a ${h} h`;
+}
+
+function renderHazardChips(){
+  const el = document.getElementById('hazardChips');
+  el.innerHTML = HAZARDS.map(h=>`
+    <button class="chip ${h.id===currentHazard?'active':''}" onclick="selectHazard('${h.id}')">
+      ${h.icon} ${h.label}
+    </button>`).join('');
+}
+function selectHazard(id){ currentHazard = id; renderHazardChips(); renderGrid(); }
+
+let selectedZone = null;
+function renderGrid(){
+  const el = document.getElementById('zoneGrid');
+  el.innerHTML = ZONES.map(z=>{
+    const lvl = state[z.id][currentHazard];
+    return `<div class="zone lvl-${lvl}" onclick="selectZone('${z.id}')">
+      <div class="pulse" id="pulse-${z.id}"></div>
+      <div class="name">${z.name}</div>
+      <div class="val">${LEVEL_LABEL[lvl]}</div>
+    </div>`;
+  }).join('');
+  if(selectedZone) renderDetail(selectedZone);
+}
+
+function selectZone(id){
+  selectedZone = id;
+  renderDetail(id);
+}
+function renderDetail(id){
+  const z = ZONES.find(x=>x.id===id);
+  const s = state[id];
+  const lvl = s[currentHazard];
+  const conf = s.confidence[currentHazard];
+  const txt = IMPACT_TEXT[currentHazard][lvl](z.name);
+  document.getElementById('zoneDetail').innerHTML = `
+    <h3>${z.name} — ${HAZARDS.find(h=>h.id===currentHazard).label}</h3>
+    <p>${txt}</p>
+    <div class="confidence"><span>Confiance</span><div class="bar"><div class="fill" style="width:${conf}%"></div></div><span>${conf}%</span></div>
+  `;
+}
+
+function renderFeed(){
+  const el = document.getElementById('feed');
+  if(feed.length===0){ el.innerHTML = '<p style="padding:14px 0;color:var(--muted);font-size:13px;">Aucun événement pour le moment.</p>'; return; }
+  const colors = ['var(--vert)','var(--jaune)','var(--orange)','var(--rouge)'];
+  el.innerHTML = feed.map(f=>`
+    <div class="feed-item">
+      <div class="bar" style="background:${colors[f.level]}"></div>
+      <div class="content">
+        <div class="row1"><span class="zoneName">${f.zoneName}</span><span class="time">${timeAgo(f.ts)}</span></div>
+        <div class="txt">${f.text}</div>
+        ${f.contributor ? trustBadge(f.contributor.trust) + ` <span style="font-size:11px;color:var(--muted);margin-left:4px;">${f.contributor.name}</span>` : ''}
+      </div>
+    </div>`).join('');
+}
+
+function updateAlertBar(){
+  // trouve la zone/aléa le plus critique
+  let worst = null;
+  ZONES.forEach(z=>{
+    HAZARDS.forEach(h=>{
+      const lvl = state[z.id][h.id];
+      if(lvl>=2 && (!worst || lvl>worst.lvl)){
+        worst = {lvl, zone:z, hazard:h};
+      }
+    });
+  });
+  const bar = document.getElementById('alertbar');
+  if(worst && !bar.dataset.dismissed){
+    const conf = state[worst.zone.id].confidence[worst.hazard.id];
+    document.getElementById('alertTitle').textContent = `Vigilance ${worst.lvl===3?'rouge':'orange'} — ${worst.hazard.label.toLowerCase()}`;
+    document.getElementById('alertBody').textContent = `${worst.zone.name} : ${IMPACT_TEXT[worst.hazard.id][worst.lvl](worst.zone.name)} (confiance ${conf}%)`;
+    bar.classList.add('show');
+  } else if(!worst){
+    bar.classList.remove('show');
+  }
+}
+function dismissAlert(){
+  const bar = document.getElementById('alertbar');
+  bar.dataset.dismissed = '1';
+  bar.classList.remove('show');
+  setTimeout(()=>{ delete bar.dataset.dismissed; }, 20000);
+}
+
+// Onglets
+document.querySelectorAll('.tab').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    document.querySelectorAll('.tab').forEach(b=>b.classList.remove('active'));
+    document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('view-'+btn.dataset.tab).classList.add('active');
+  });
+});
+
+// Sheet signalement
+function openSheet(){
+  const zSel = document.getElementById('fZone');
+  zSel.innerHTML = ZONES.map(z=>`<option value="${z.id}">${z.name}</option>`).join('');
+  if(selectedZone) zSel.value = selectedZone;
+  document.getElementById('sheetBackdrop').classList.add('show');
+  document.getElementById('sheet').classList.add('show');
+}
+function closeSheet(){
+  document.getElementById('sheetBackdrop').classList.remove('show');
+  document.getElementById('sheet').classList.remove('show');
+}
+let selSeverity = 1;
+function renderSevRow(){
+  const row = document.getElementById('fSevRow');
+  row.innerHTML = LEVEL_LABEL.map((l,i)=>`<button type="button" class="sev-btn ${i===selSeverity?'sel-'+i:''}" onclick="pickSeverity(${i})">${l}</button>`).join('');
+}
+function pickSeverity(i){ selSeverity = i; renderSevRow(); }
+
+function showToast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'), 2600);
+}
+
+function submitReport(){
+  const zid = document.getElementById('fZone').value;
+  const hz = document.getElementById('fHazard').value;
+  const note = document.getElementById('fNote').value.trim();
+  const z = ZONES.find(x=>x.id===zid);
+  const me = {name:'Vous', trust:60};
+  state[zid][hz] = Math.max(state[zid][hz], selSeverity);
+  state[zid].confidence[hz] = Math.min(99, state[zid].confidence[hz] + 4);
+  pushFeed({
+    zoneName: z.name, level: selSeverity, contributor: me,
+    text: note ? `Signalement : ${note}` : `Signalement ${HAZARDS.find(h=>h.id===hz).label.toLowerCase()} — gravité "${LEVEL_LABEL[selSeverity]}"`,
+  });
+  document.getElementById('fNote').value = '';
+  closeSheet();
+  showToast('Merci ! Votre signalement recalibre la carte en temps réel.');
+  renderGrid();
+  updateAlertBar();
+  const tile = document.getElementById('pulse-'+zid);
+  if(tile){ tile.parentElement.classList.remove('updated'); void tile.offsetWidth; tile.parentElement.classList.add('updated'); }
+}
+
+// Simulation en direct
+let simOn = true;
+function toggleSim(){
+  simOn = !simOn;
+  document.getElementById('simSwitch').classList.toggle('on', simOn);
+}
+function simTick(){
+  if(!simOn) return;
+  const z = ZONES[Math.floor(Math.random()*ZONES.length)];
+  const h = HAZARDS[Math.floor(Math.random()*HAZARDS.length)];
+  const dir = Math.random()<0.55 ? 1 : -1;
+  const cur = state[z.id][h.id];
+  const next = Math.max(0, Math.min(3, cur + dir));
+  if(next === cur) return;
+  state[z.id][h.id] = next;
+  state[z.id].confidence[h.id] = Math.max(50, Math.min(97, state[z.id].confidence[h.id] + (Math.random()<0.5?3:-2)));
+  const contributor = Math.random()<0.7 ? CONTRIBUTORS[Math.floor(Math.random()*CONTRIBUTORS.length)] : null;
+  pushFeed({
+    zoneName: z.name, level: next, contributor,
+    text: contributor
+      ? `Signalement citoyen — ${h.label.toLowerCase()} : ${IMPACT_TEXT[h.id][next](z.name)}`
+      : `Mise à jour modèle — ${h.label.toLowerCase()} : ${IMPACT_TEXT[h.id][next](z.name)}`,
+  });
+  if(currentHazard===h.id){
+    renderGrid();
+    const tile = document.getElementById('pulse-'+z.id);
+    if(tile){ tile.parentElement.classList.remove('updated'); void tile.offsetWidth; tile.parentElement.classList.add('updated'); }
+  }
+  updateAlertBar();
+}
+setInterval(simTick, 9000);
+
+// Carte réelle — stations Hub'Eau/Vigicrues réelles (Seine à Paris)
+const REAL_STATIONS = [
+  { code:'F700000103', name:'Seine — Paris Austerlitz', lat:48.845, lon:2.366 },
+  { code:'F700000112', name:'Seine — Pont des Invalides', lat:48.864, lon:2.311 },
+];
+let realMapInstance = null;
+let realMapMarkers = {};
+
+function setMapView(mode){
+  const schema = mode === 'schema';
+  document.getElementById('schematicBlock').style.display = schema ? '' : 'none';
+  document.getElementById('realBlock').style.display = schema ? 'none' : '';
+  document.getElementById('btnViewSchema').classList.toggle('active', schema);
+  document.getElementById('btnViewReal').classList.toggle('active', !schema);
+  if(!schema){
+    if(!realMapInstance) initRealMap();
+    setTimeout(()=>{ if(realMapInstance) realMapInstance.invalidateSize(); }, 50);
+    if(!Object.keys(realMapMarkers).length || !document.getElementById('stationList').dataset.loaded){
+      loadStations();
+    }
+  }
+}
+
+function initRealMap(){
+  if(typeof L === 'undefined'){
+    document.getElementById('realMap').innerHTML = '<div style="padding:16px;font-size:12.5px;color:var(--muted);">Bibliothèque cartographique indisponible hors-ligne.</div>';
+    return;
+  }
+  realMapInstance = L.map('realMap', { zoomControl:true }).setView([48.853, 2.34], 12);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '&copy; OpenStreetMap contributors',
+    maxZoom: 18,
+  }).addTo(realMapInstance);
+  REAL_STATIONS.forEach(st=>{
+    const marker = L.marker([st.lat, st.lon]).addTo(realMapInstance);
+    marker.bindPopup(`<b>${st.name}</b><br>Chargement des données…`);
+    realMapMarkers[st.code] = marker;
+  });
+}
+
+async function fetchLatest(code, grandeur){
+  const url = `https://hubeau.eaufrance.fr/api/v2/hydrometrie/observations_tr?code_entite=${code}&grandeur_hydro=${grandeur}&size=20&fields=date_obs,resultat_obs&format=json`;
+  const res = await fetch(url);
+  if(!res.ok) throw new Error('HTTP ' + res.status);
+  const json = await res.json();
+  const rows = (json && json.data) || [];
+  if(!rows.length) return null;
+  rows.sort((a,b)=> new Date(b.date_obs) - new Date(a.date_obs));
+  return rows[0];
+}
+
+async function loadStations(){
+  const list = document.getElementById('stationList');
+  list.dataset.loaded = '1';
+  list.innerHTML = REAL_STATIONS.map(st=>`
+    <div class="stationCard" id="scard-${st.code}">
+      <div><div class="sname">${st.name}</div><div class="scode">${st.code}</div></div>
+      <div class="svals">Chargement…</div>
+    </div>`).join('');
+
+  for(const st of REAL_STATIONS){
+    try{
+      const [h, q] = await Promise.all([fetchLatest(st.code,'H'), fetchLatest(st.code,'Q')]);
+      const hCm = h ? (h.resultat_obs/10).toFixed(0) : null; // mm -> cm
+      const qM3 = q ? (q.resultat_obs/1000).toFixed(1) : null; // L/s -> m3/s
+      const ts = (h && h.date_obs) || (q && q.date_obs);
+      const el = document.getElementById('scard-'+st.code);
+      if(el){
+        el.querySelector('.svals').innerHTML = `
+          <b>${hCm !== null ? hCm+' cm' : '—'}</b>
+          ${qM3 !== null ? qM3+' m³/s · ' : ''}${ts ? new Date(ts).toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'}) : ''}
+        `;
+      }
+      const marker = realMapMarkers[st.code];
+      if(marker){
+        marker.setPopupContent(`<b>${st.name}</b><br>Hauteur : ${hCm !== null ? hCm+' cm' : 'indisponible'}<br>Débit : ${qM3 !== null ? qM3+' m³/s' : 'indisponible'}${ts ? '<br><small>'+new Date(ts).toLocaleString('fr-FR')+'</small>' : ''}`);
+      }
+    }catch(err){
+      const el = document.getElementById('scard-'+st.code);
+      if(el) el.querySelector('.svals').innerHTML = '<span style="color:var(--muted)">Indisponible</span>';
+      const marker = realMapMarkers[st.code];
+      if(marker) marker.setPopupContent(`<b>${st.name}</b><br>Données momentanément indisponibles.`);
+    }
+  }
+}
+
+// Install prompt (PWA)
+let deferredPrompt;
+window.addEventListener('beforeinstallprompt', (e)=>{
+  e.preventDefault();
+  deferredPrompt = e;
+  document.getElementById('installBtn').classList.add('show');
+});
+document.getElementById('installBtn').addEventListener('click', async ()=>{
+  if(!deferredPrompt) return;
+  deferredPrompt.prompt();
+  await deferredPrompt.userChoice;
+  deferredPrompt = null;
+  document.getElementById('installBtn').classList.remove('show');
+});
+
+if('serviceWorker' in navigator){
+  window.addEventListener('load', ()=>{
+    navigator.serviceWorker.register('./sw.js').catch(()=>{});
+  });
+}
+
+// Init
+renderHazardChips();
+renderGrid();
+renderFeed();
+renderSevRow();
+updateAlertBar();
+pushFeed({zoneName:'Bord-de-Rivière', level:2, contributor:null, text:"Mise à jour modèle — inondation : "+IMPACT_TEXT.inondation[2]('Bord-de-Rivière')});
+pushFeed({zoneName:'Vieux-Pont', level:1, contributor:CONTRIBUTORS[0], text:"Signalement citoyen — inondation : sol saturé, petites flaques sur le pont."});
+</script>
+</body>
+</html>
