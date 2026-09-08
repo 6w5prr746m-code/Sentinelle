@@ -8,7 +8,8 @@ import {
   renderHazardChips, renderGrid, renderDetail, pulseZone, findWorst,
 } from './store.js';
 import { initFeed, pushFeed, renderFeed } from './feed.js';
-import { setMapView, loadStations } from './map.js';
+import { setMapView, loadStations, searchArea, locateAndSearch } from './map.js';
+import { loadVigilance, filterVigilance, isVigilanceLoaded } from './vigilance.js';
 import { openSheet, closeSheet, renderSevRow, pickSeverity, submitReport } from './report.js';
 import { toggleSim, startSim } from './sim.js';
 import { initTheme, renderThemePicker } from './theme.js';
@@ -81,7 +82,19 @@ function wireCarte() {
   });
   $('btnViewSchema').addEventListener('click', () => setMapView('schema'));
   $('btnViewReal').addEventListener('click', () => setMapView('real'));
+  $('btnViewVigilance').addEventListener('click', () => {
+    setMapView('vigilance');
+    if (!isVigilanceLoaded()) loadVigilance();
+  });
   $('refreshStationsBtn').addEventListener('click', () => loadStations());
+
+  $('communeSearchBtn').addEventListener('click', () => searchArea($('communeSearch').value));
+  $('communeSearch').addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') { e.preventDefault(); searchArea($('communeSearch').value); }
+  });
+  $('locateBtn').addEventListener('click', () => locateAndSearch());
+
+  $('vigilanceFilter').addEventListener('input', (e) => filterVigilance(e.target.value));
 }
 
 function wireAlertBar() {
