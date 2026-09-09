@@ -1,9 +1,10 @@
-const CACHE = 'sentinelle-v2';
+const CACHE = 'sentinelle-v3';
 const ASSETS = [
   './', './index.html', './manifest.json',
   './css/base.css', './css/themes.css',
   './js/app.js', './js/data.js', './js/store.js', './js/theme.js',
   './js/feed.js', './js/map.js', './js/report.js', './js/sim.js', './js/utils.js',
+  './js/geo.js', './js/departments.js', './js/vigilance.js',
   './icons/icon-192.png', './icons/icon-512.png',
 ];
 
@@ -21,6 +22,9 @@ self.addEventListener('activate', (e) => {
 
 self.addEventListener('fetch', (e) => {
   if (e.request.method !== 'GET') return;
+  // Les données de vigilance/hydrométrie doivent toujours être fraîches :
+  // on ne les met jamais en cache, on laisse le fetch normal du navigateur faire foi.
+  if (e.request.url.includes('/api/')) return;
   e.respondWith(
     caches.match(e.request).then((cached) => {
       const fetchPromise = fetch(e.request).then((res) => {

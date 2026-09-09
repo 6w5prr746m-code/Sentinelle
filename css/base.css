@@ -168,3 +168,18 @@ main{flex:1;padding:12px 12px 90px;}
 .status-dot{width:7px;height:7px;border-radius:50%;background:var(--muted);flex:none;}
 .status-dot.ok{background:var(--vert);}
 .status-dot.bad{background:var(--rouge);}
+
+/* Recherche de commune (carte réelle) */
+.searchRow{display:flex;gap:6px;padding:2px 2px 6px;}
+.searchRow input{flex:1;padding:10px 12px;border-radius:var(--radius-sm);border:1px solid var(--border);background:var(--card);color:var(--text);font-size:13.5px;font-family:inherit;min-width:0;}
+.searchRow button{flex:none;width:40px;border-radius:var(--radius-sm);border:1px solid var(--border);background:var(--card);font-size:15px;cursor:pointer;}
+#stationSearchStatus{padding:0 4px 8px;}
+
+/* Vigilance France */
+#vigilanceFilter{width:100%;padding:10px 12px;border-radius:var(--radius-sm);border:1px solid var(--border);background:var(--card);color:var(--text);font-size:13.5px;font-family:inherit;margin:2px 0 10px;}
+.vig-row{display:flex;align-items:center;gap:10px;padding:10px 4px;border-bottom:1px solid var(--border);}
+.vig-row:last-child{border-bottom:none;}
+.vig-row .vig-color{width:14px;height:14px;border-radius:4px;flex:none;}
+.vig-row .vig-name{font-weight:700;font-size:13px;flex:1;}
+.vig-row .vig-hazards{font-size:15px;letter-spacing:2px;}
+.vig-empty{padding:16px 4px;font-size:12.5px;color:var(--muted);text-align:center;}

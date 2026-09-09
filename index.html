@@ -46,8 +46,9 @@
     <!-- CARTE -->
     <div class="view active" id="view-carte" role="tabpanel" aria-labelledby="tab-carte">
       <div class="viewToggle" role="group" aria-label="Mode d'affichage de la carte">
-        <button id="btnViewSchema" class="active" type="button" aria-pressed="true">🗺️ Carte schématique (démo)</button>
-        <button id="btnViewReal" type="button" aria-pressed="false">🌍 Carte réelle (Seine)</button>
+        <button id="btnViewSchema" class="active" type="button" aria-pressed="true">🗺️ Schématique (démo)</button>
+        <button id="btnViewReal" type="button" aria-pressed="false">🌊 Crues réelles</button>
+        <button id="btnViewVigilance" type="button" aria-pressed="false">🇫🇷 Vigilance France</button>
       </div>
 
       <div id="schematicBlock">
@@ -71,12 +72,25 @@
 
       <div id="realBlock" style="display:none">
         <div class="section-title">Stations Vigicrues / Hub'Eau <span class="livebadge"><i></i>Temps réel</span></div>
+        <div class="searchRow">
+          <input type="text" id="communeSearch" placeholder="Chercher une commune (ex : Lyon, Toulouse…)" aria-label="Chercher une commune">
+          <button type="button" id="communeSearchBtn" aria-label="Rechercher">🔎</button>
+          <button type="button" id="locateBtn" aria-label="Me localiser">📍</button>
+        </div>
+        <p class="status-line" id="stationSearchStatus">Seine à Paris (par défaut) — cherchez une commune pour voir les stations réelles les plus proches, n'importe où en France.</p>
         <div id="realMap"></div>
         <div class="card" style="margin-top:10px;padding:4px 14px;">
           <div id="stationList"></div>
           <button class="refreshBtn" id="refreshStationsBtn" type="button">↻ Actualiser les niveaux d'eau</button>
         </div>
-        <p class="datasrc">Données publiques en direct — API Hub'Eau / hydrométrie (hubeau.eaufrance.fr). Stations réelles sur la Seine à Paris, données mises à jour toutes les ~5 min par le service public.</p>
+        <p class="datasrc">Données publiques en direct — API Hub'Eau / hydrométrie (hubeau.eaufrance.fr) et API Adresse (api-adresse.data.gouv.fr) pour la recherche de commune. Couverture : toute la France, données mises à jour toutes les ~5 min par le service public.</p>
+      </div>
+
+      <div id="vigilanceBlock" style="display:none">
+        <div class="section-title">Vigilance météo nationale <span class="livebadge" id="vigilanceLiveBadge"><i></i>Météo-France</span></div>
+        <input type="text" id="vigilanceFilter" placeholder="Filtrer par département (ex : Rhône, 69…)" aria-label="Filtrer les départements">
+        <div id="vigilanceList"></div>
+        <p class="datasrc" id="vigilanceSource">Nécessite le déploiement complet avec fonction serverless (voir README).</p>
       </div>
     </div>
 
